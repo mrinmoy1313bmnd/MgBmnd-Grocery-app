@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MgBmnd Grocery App(742301)</title>
+  <title>MgBmnd Grocery App</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -115,6 +115,22 @@
     let products = [];
     let total = 0;
 
+    window.onload = function () {
+      const savedProducts = localStorage.getItem('products');
+      const savedTotal = localStorage.getItem('total');
+
+      if (savedProducts) {
+        products = JSON.parse(savedProducts);
+        updateProductList();
+        updateBillProductOptions();
+      }
+
+      if (savedTotal) {
+        total = parseFloat(savedTotal);
+        document.getElementById('totalBill').textContent = `মোট: ₹${total.toFixed(2)}`;
+      }
+    };
+
     function addProduct() {
       const name = document.getElementById('productName').value;
       const price = parseFloat(document.getElementById('productPrice').value);
@@ -122,6 +138,7 @@
 
       if (name && price > 0) {
         products.push({ name, price, unit });
+        localStorage.setItem('products', JSON.stringify(products));
         updateProductList();
         updateBillProductOptions();
         document.getElementById('productName').value = '';
@@ -140,6 +157,7 @@
         btn.className = 'delete-btn';
         btn.onclick = () => {
           products.splice(index, 1);
+          localStorage.setItem('products', JSON.stringify(products));
           updateProductList();
           updateBillProductOptions();
         };
@@ -169,41 +187,29 @@
         pic: 1,
         other: 1
       };
-
-      if (unitMap[from] && unitMap[to]) {
-        return (amount * unitMap[from]) / unitMap[to];
-      }
-      return null;
+      return (amount * unitMap[from]) / unitMap[to];
     }
 
     function generateBill() {
-      const productIndex = document.getElementById('billProduct').value;
-      const amount = parseFloat(document.getElementById('billAmount').value);
-      const unit = document.getElementById('billUnit').value;
+      const index = document.getElementById('billProduct').value;
+      const inputAmount = parseFloat(document.getElementById('billAmount').value);
+      const inputUnit = document.getElementById('billUnit').value;
 
-      if (productIndex !== '' && amount > 0) {
-        const product = products[productIndex];
+      if (products[index] && inputAmount > 0) {
+        const product = products[index];
+        const finalAmount = convertUnit(inputAmount, inputUnit, product.unit);
+        const cost = finalAmount * product.price;
 
-        // ইউনিট রূপান্তর
-        const convertedAmount = convertUnit(amount, unit, product.unit);
-
-        if (convertedAmount === null) {
-          alert("এই ইউনিটের জন্য রূপান্তর সাপোর্ট নেই।");
-          return;
-        }
-
-        const cost = product.price * convertedAmount;
-        total += cost;
-
-        const list = document.getElementById('billOutput');
+        const output = document.getElementById('billOutput');
         const item = document.createElement('li');
-        item.textContent = `${product.name} - ${amount} ${unit} × ₹${product.price}/${product.unit} = ₹${cost.toFixed(2)}`;
-        list.appendChild(item);
+        item.textContent = `${product.name} (${inputAmount} ${inputUnit}) - ₹${cost.toFixed(2)}`;
+        output.appendChild(item);
 
+        total += cost;
+        localStorage.setItem('total', total.toFixed(2));
         document.getElementById('totalBill').textContent = `মোট: ₹${total.toFixed(2)}`;
-        document.getElementById('billAmount').value = '';
       }
     }
   </script>
 </body>
-</html
+</html>
