@@ -1,1 +1,0 @@
-# MgBmnd-Grocery-app
